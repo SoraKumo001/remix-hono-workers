@@ -1,0 +1,15 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "remix-hono-workers"
+compatibility_date = "2024-11-12"
+compatibility_flags = ["nodejs_compat"]
+main = "./server.ts"
+assets = { directory = "./build/client" }
+
+# Workers Logs
+# Docs: https://developers.cloudflare.com/workers/observability/logs/workers-logs/
+# Configuration: https://developers.cloudflare.com/workers/observability/logs/workers-logs/#enable-workers-logs
+[observability]
+enabled = true
+
+[vars]
+a = "123"
