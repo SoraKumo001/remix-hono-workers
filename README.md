@@ -74,7 +74,11 @@ app.use(async (_c, next) => {
     const processEnv = process.env;
     Object.defineProperty(process, "env", {
       get() {
-        return { ...processEnv, ...getContext().env };
+        try {
+          return { ...processEnv, ...getContext().env };
+        } catch {
+          return processEnv;
+        }
       },
     });
   }
@@ -104,18 +108,44 @@ export default app;
 
 ```tsx
 import { useLoaderData } from "@remix-run/react";
+import { prisma } from "~/libs/prisma";
 
 export default function Index() {
   const value = useLoaderData<string>();
-  return <pre>{value}</pre>;
+  return <div>{value}</div>;
 }
 
-// At the point of module execution, process.env is available.
-const value = JSON.stringify(process.env, null, 2);
+export async function loader(): Promise<string> {
+  //You can directly use the PrismaClient instance received from the module
+  const users = await prisma.user.findMany();
+  return JSON.stringify(users);
+}
+```
 
-export const loader = () => {
-  return value;
+## app/libs/prisma.ts
+
+```ts
+import { PrismaClient } from "@prisma/client";
+import { PrismaD1 } from "@prisma/adapter-d1";
+import { getContext } from "hono/context-storage";
+
+type Env = {
+  Variables: {
+    prisma: PrismaClient;
+  };
 };
+
+// Create a proxy that returns a PrismaClient instance on SessionContext with the variable name prisma
+export const prisma = new Proxy<PrismaClient>({} as never, {
+  get(_target: unknown, props: keyof PrismaClient) {
+    const context = getContext<Env>();
+    if (!context.get("prisma")) {
+      const adapter = new PrismaD1(process.env.DB as unknown as D1Database);
+      context.set("prisma", new PrismaClient({ adapter }));
+    }
+    return context.get("prisma")[props];
+  },
+});
 ```
 
 ## wrangler.toml
@@ -134,6 +164,8 @@ assets = { directory = "./build/client" }
 [observability]
 enabled = true
 
-[vars]
-a = "123"
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "prisma-demo-db"
+database_id = "03b35086-e3b9-4c54-94ac-fac685f207c5"
 ```
