@@ -12,7 +12,11 @@ app.use(async (_c, next) => {
     const processEnv = process.env;
     Object.defineProperty(process, "env", {
       get() {
-        return { ...processEnv, ...getContext().env };
+        try {
+          return { ...processEnv, ...getContext().env };
+        } catch {
+          return processEnv;
+        }
       },
     });
   }

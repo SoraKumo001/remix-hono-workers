@@ -11,5 +11,7 @@ assets = { directory = "./build/client" }
 [observability]
 enabled = true
 
-[vars]
-a = "123"
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "prisma-demo-db"
+database_id = "03b35086-e3b9-4c54-94ac-fac685f207c5"

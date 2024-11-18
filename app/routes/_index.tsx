@@ -1,17 +1,13 @@
 import { useLoaderData } from "@remix-run/react";
+import { prisma } from "~/libs/prisma";
 
 export default function Index() {
   const value = useLoaderData<string>();
-  return (
-    <pre>
-      {value}
-    </pre>
-  );
+  return <div>{value}</div>;
 }
 
-// At the point of module execution, process.env is available.
-const value = JSON.stringify(process.env,null,2);
-
-export const loader = ()=>{
-  return value
+export async function loader(): Promise<string> {
+  //You can directly use the PrismaClient instance received from the module
+  const users = await prisma.user.findMany();
+  return JSON.stringify(users);
 }
